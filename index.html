@@ -163,7 +163,7 @@
 </div>
 
 <script>
-  let total = 120, remaining = 120, timer = null, running = false, sets = 0;
+  let total = 120, remaining = 120, timer = null, running = false, sets = 0, paused = false;
   const display = document.getElementById('display');
   const btnStart = document.getElementById('btnStart');
   const setsCount = document.getElementById('setsCount');
@@ -198,7 +198,6 @@
       clearInterval(timer); timer = null; running = false;
       remaining = 0;
       btnStart.textContent = '开始'; btnStart.className = 'btn-start';
-      sets++; setsCount.textContent = sets;
       beep(); render(); return;
     }
     remaining--; render();
@@ -206,10 +205,12 @@
 
   function toggleTimer() {
     if (running) {
-      clearInterval(timer); timer = null; running = false;
+      clearInterval(timer); timer = null; running = false; paused = true;
       btnStart.textContent = '继续'; btnStart.className = 'btn-start';
     } else {
       if (remaining <= 0) { total = readInputs(); remaining = total; }
+      if (!paused) { sets++; setsCount.textContent = sets; }
+      paused = false;
       running = true;
       btnStart.textContent = '暂停'; btnStart.className = 'btn-pause';
       timer = setInterval(tick, 1000);
@@ -218,7 +219,7 @@
   }
 
   function resetTimer() {
-    clearInterval(timer); timer = null; running = false;
+    clearInterval(timer); timer = null; running = false; paused = false;
     total = readInputs(); remaining = total;
     btnStart.textContent = '开始'; btnStart.className = 'btn-start';
     render();
