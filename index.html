@@ -253,7 +253,7 @@
 
   // 基于绝对时间计算剩余秒数，不怕 setInterval 被暂停
   function calcRemaining() {
-    return Math.max(0, Math.round((endTime - Date.now()) / 1000));
+    return Math.max(0, Math.floor((endTime - Date.now()) / 1000));
   }
 
   function tick() {
@@ -265,9 +265,7 @@
       btnStart.textContent = '开始'; btnStart.className = 'btn-start';
       beep(); render(); return;
     }
-    // 用 setTimeout + 修正，比 setInterval 更准且不受后台限制影响
-    const drift = (endTime - Date.now()) % 1000;
-    timer = setTimeout(tick, Math.max(0, 1000 + drift));
+    timer = setTimeout(tick, 1000);
   }
 
   function toggleTimer() {
