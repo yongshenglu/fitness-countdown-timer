@@ -192,6 +192,7 @@
   let total = 120, remaining = 120, timer = null, running = false, sets = 0, paused = false;
   let endTime = 0;
   let audioCtx = null;
+  const INIT_MIN = 2, INIT_SEC = 0, INIT_TOTAL = 120;
   const display = document.getElementById('display');
   const btnStart = document.getElementById('btnStart');
   const setsCount = document.getElementById('setsCount');
@@ -268,7 +269,9 @@
 
   function resetTimer() {
     clearInterval(timer); timer = null; running = false; paused = false;
-    total = readInputs(); remaining = total;
+    document.getElementById('inputMin').value = INIT_MIN;
+    document.getElementById('inputSec').value = INIT_SEC;
+    total = INIT_TOTAL; remaining = INIT_TOTAL;
     btnStart.textContent = '开始'; btnStart.className = 'btn-start';
     render();
   }
