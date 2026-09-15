@@ -204,7 +204,11 @@
     let val = parseInt(el.value) || 0;
     val = Math.min(max, Math.max(min, val + delta));
     el.value = val;
-    if (!running) resetTimer();
+    if (!running) {
+      total = readInputs();
+      remaining = total;
+      render();
+    }
   }
 
   function fmt(s) {
