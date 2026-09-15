@@ -79,19 +79,37 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
     margin-top: 14px;
   }
-  .time-set label { font-size: 13px; color: #8892b0; }
-  .time-set input {
-    width: 56px; text-align: center; font-size: 18px; font-weight: 600;
-    padding: 8px 4px; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+  .time-set label { font-size: 13px; color: #8892b0; margin-right: 4px; }
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .stepper input {
+    width: 48px; text-align: center; font-size: 18px; font-weight: 600;
+    padding: 8px 2px; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
     background: rgba(255,255,255,0.05); color: #eee; outline: none;
     transition: border-color 0.2s;
     -webkit-appearance: none;
+    -moz-appearance: textfield;
   }
-  .time-set input:focus { border-color: #e94560; }
-  .time-set span { color: #8892b0; font-size: 18px; }
+  .stepper input:focus { border-color: #e94560; }
+  .stepper input::-webkit-outer-spin-button,
+  .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .step-btn {
+    width: 32px; height: 32px; border-radius: 8px; padding: 0;
+    font-size: 18px; font-weight: 700; line-height: 1;
+    background: rgba(255,255,255,0.08); color: #8892b0;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .step-btn:hover { background: rgba(255,255,255,0.14); color: #eee; }
+  .step-btn:active { transform: scale(0.9); }
+  .time-set .colon { color: #8892b0; font-size: 20px; font-weight: 300; margin: 0 2px; }
 
   .controls {
     display: flex;
@@ -145,9 +163,17 @@
     <div class="time-display" id="display">02:00</div>
     <div class="time-set">
       <label>设置：</label>
-      <input type="number" id="inputMin" min="0" max="99" value="2" inputmode="numeric">
-      <span>:</span>
-      <input type="number" id="inputSec" min="0" max="59" value="0" inputmode="numeric">
+      <div class="stepper">
+        <button class="step-btn" onclick="adjust('inputMin',-1)">−</button>
+        <input type="number" id="inputMin" min="0" max="99" value="2" inputmode="numeric">
+        <button class="step-btn" onclick="adjust('inputMin',1)">+</button>
+      </div>
+      <span class="colon">:</span>
+      <div class="stepper">
+        <button class="step-btn" onclick="adjust('inputSec',-5)">−</button>
+        <input type="number" id="inputSec" min="0" max="59" value="0" inputmode="numeric">
+        <button class="step-btn" onclick="adjust('inputSec',5)">+</button>
+      </div>
     </div>
     <div class="controls">
       <button class="btn-start" id="btnStart" onclick="toggleTimer()">开始</button>
@@ -167,6 +193,16 @@
   const display = document.getElementById('display');
   const btnStart = document.getElementById('btnStart');
   const setsCount = document.getElementById('setsCount');
+
+  function adjust(id, delta) {
+    const el = document.getElementById(id);
+    const max = parseInt(el.max);
+    const min = parseInt(el.min);
+    let val = parseInt(el.value) || 0;
+    val = Math.min(max, Math.max(min, val + delta));
+    el.value = val;
+    if (!running) resetTimer();
+  }
 
   function fmt(s) {
     return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
