@@ -189,7 +189,7 @@
 </div>
 
 <script>
-  let total = 120, remaining = 120, timer = null, running = false, sets = 0, paused = false;
+  let total = 120, remaining = 120, timer = null, running = false, sets = 0, paused = false, completed = false;
   let endTime = 0;
   let audioCtx = null;
   const INIT_MIN = 2, INIT_SEC = 0, INIT_TOTAL = 120;
@@ -205,6 +205,7 @@
     val = Math.min(max, Math.max(min, val + delta));
     el.value = val;
     if (!running) {
+      completed = false;
       total = readInputs();
       remaining = total;
       render();
@@ -216,7 +217,7 @@
   }
   function render() {
     display.textContent = fmt(remaining);
-    display.className = 'time-display' + (running ? ' running' : (remaining===0?' finished':''));
+    display.className = 'time-display' + (running ? ' running' : (completed ? ' finished' : ''));
   }
   function readInputs() {
     const m = parseInt(document.getElementById('inputMin').value);
@@ -249,7 +250,7 @@
     remaining--;
     render();
     if (remaining <= 0) {
-      clearInterval(timer); timer = null; running = false;
+      clearInterval(timer); timer = null; running = false; completed = true;
       remaining = 0;
       btnStart.textContent = '开始'; btnStart.className = 'btn-start';
       beep(); render(); return;
@@ -265,6 +266,7 @@
       if (!paused) { sets++; setsCount.textContent = sets; }
       paused = false;
       running = true;
+      completed = false;
       endTime = Date.now() + remaining * 1000;
       ensureAudio();
       btnStart.textContent = '暂停'; btnStart.className = 'btn-pause';
@@ -274,7 +276,7 @@
   }
 
   function resetTimer() {
-    clearInterval(timer); timer = null; running = false; paused = false;
+    clearInterval(timer); timer = null; running = false; paused = false; completed = false;
     document.getElementById('inputMin').value = INIT_MIN;
     document.getElementById('inputSec').value = INIT_SEC;
     total = INIT_TOTAL; remaining = INIT_TOTAL;
