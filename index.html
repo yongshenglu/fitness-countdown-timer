@@ -191,6 +191,7 @@
 <script>
   let total = 120, remaining = 120, timer = null, running = false, sets = 0, paused = false;
   let endTime = 0;
+  let audioCtx = null; // 用户点击时创建，iOS 才能播放
   const display = document.getElementById('display');
   const btnStart = document.getElementById('btnStart');
   const setsCount = document.getElementById('setsCount');
@@ -218,16 +219,36 @@
     return m*60+s || 120;
   }
 
+  // 确保 AudioContext 已就绪（iOS 需要在用户手势中创建/恢复）
+  function ensureAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
   function beep() {
+    // 尝试音频
     try {
-      const ctx = new (window.AudioContext||window.webkitAudioContext)();
-      [0,200,400].forEach(d => {
-        const o = ctx.createOscillator(), g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.frequency.value = 880; g.gain.value = 0.3;
-        o.start(ctx.currentTime+d/1000); o.stop(ctx.currentTime+d/1000+0.15);
+      const ctx = ensureAudio();
+      [0, 200, 400].forEach(d => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.frequency.value = 880;
+        g.gain.value = 0.3;
+        o.start(ctx.currentTime + d / 1000);
+        o.stop(ctx.currentTime + d / 1000 + 0.15);
       });
-    } catch(e) {}
+    } catch (e) {}
+    // 同时震动（iOS Safari 支持）
+    if (navigator.vibrate) {
+      navigator.vibrate([200, 100, 200, 100, 200]);
+    }
   }
 
   // 基于绝对时间计算剩余秒数，不怕 setInterval 被暂停
@@ -251,15 +272,19 @@
 
   function toggleTimer() {
     if (running) {
+      // 暂停
       clearTimeout(timer); timer = null; running = false; paused = true;
       remaining = calcRemaining();
       btnStart.textContent = '继续'; btnStart.className = 'btn-start';
     } else {
+      // 开始/继续
       if (remaining <= 0) { total = readInputs(); remaining = total; }
       if (!paused) { sets++; setsCount.textContent = sets; }
       paused = false;
       running = true;
       endTime = Date.now() + remaining * 1000;
+      // 在用户手势中初始化音频上下文，确保后续能播放
+      ensureAudio();
       btnStart.textContent = '暂停'; btnStart.className = 'btn-pause';
       timer = setTimeout(tick, 1000);
     }
