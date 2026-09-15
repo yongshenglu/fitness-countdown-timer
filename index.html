@@ -190,6 +190,7 @@
 
 <script>
   let total = 120, remaining = 120, timer = null, running = false, sets = 0, paused = false;
+  let endTime = 0;
   const display = document.getElementById('display');
   const btnStart = document.getElementById('btnStart');
   const setsCount = document.getElementById('setsCount');
@@ -229,37 +230,62 @@
     } catch(e) {}
   }
 
+  // 基于绝对时间计算剩余秒数，不怕 setInterval 被暂停
+  function calcRemaining() {
+    return Math.max(0, Math.round((endTime - Date.now()) / 1000));
+  }
+
   function tick() {
+    if (!running) return;
+    remaining = calcRemaining();
+    render();
     if (remaining <= 0) {
-      clearInterval(timer); timer = null; running = false;
-      remaining = 0;
+      clearTimeout(timer); timer = null; running = false;
       btnStart.textContent = '开始'; btnStart.className = 'btn-start';
       beep(); render(); return;
     }
-    remaining--; render();
+    // 用 setTimeout + 修正，比 setInterval 更准且不受后台限制影响
+    const drift = (endTime - Date.now()) % 1000;
+    timer = setTimeout(tick, Math.max(0, 1000 + drift));
   }
 
   function toggleTimer() {
     if (running) {
-      clearInterval(timer); timer = null; running = false; paused = true;
+      clearTimeout(timer); timer = null; running = false; paused = true;
+      remaining = calcRemaining();
       btnStart.textContent = '继续'; btnStart.className = 'btn-start';
     } else {
       if (remaining <= 0) { total = readInputs(); remaining = total; }
       if (!paused) { sets++; setsCount.textContent = sets; }
       paused = false;
       running = true;
+      endTime = Date.now() + remaining * 1000;
       btnStart.textContent = '暂停'; btnStart.className = 'btn-pause';
-      timer = setInterval(tick, 1000);
+      timer = setTimeout(tick, 1000);
     }
     render();
   }
 
   function resetTimer() {
-    clearInterval(timer); timer = null; running = false; paused = false;
+    clearTimeout(timer); timer = null; running = false; paused = false;
     total = readInputs(); remaining = total;
     btnStart.textContent = '开始'; btnStart.className = 'btn-start';
     render();
   }
+
+  // 页面重新可见时（亮屏/切回），立即同步剩余时间
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && running) {
+      remaining = calcRemaining();
+      if (remaining <= 0) {
+        clearTimeout(timer); timer = null; running = false;
+        remaining = 0;
+        btnStart.textContent = '开始'; btnStart.className = 'btn-start';
+        beep();
+      }
+      render();
+    }
+  });
 
   function clearSets() { sets = 0; setsCount.textContent = 0; }
 
